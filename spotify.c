@@ -10,112 +10,72 @@
 #include <vdr/osd.h>
 #include <vdr/status.h>
 #include "spotidbus.h"
-#include "spotiplayer.h"
+#include "spoticontrol.h"
 
 static const char *VERSION        = "0.0.1";
 static const char *DESCRIPTION    = "display spotify mediadata";
 static const char *MAINMENUENTRY  = "Spotify";
 
-class cSpotifyControl: public cControl
-{
-    private:
-        cSpotiPlayer *player;
-    public:
-        cSpotifyControl(void);
-        virtual ~cSpotifyControl();
-        virtual eOSState ProcessKey(eKeys Key);
-        void Stop(void);
-        void Show(void);
-        virtual void Hide(void);
-};
+cSpotifyControl *spotiControl = NULL;
 
-cSpotifyControl::cSpotifyControl(void)
-:cControl(player = new cSpotiPlayer())
-{
-    cStatus::MsgReplaying(this, "MP3", 0 , true);
-}
-
-cSpotifyControl::~cSpotifyControl()
-{
-    if (player)
-        Stop();
-}
-
-void cSpotifyControl::Stop(void)
-{
-    cStatus::MsgReplaying(this, 0, 0, false);
-    delete player;
-
-    player = 0;
-}
-
-void cSpotifyControl::Show(void)
-{
-    char *artist;
-    char *title;
-    char *buffer;
-    artist = getMetaData("xesam:artist");
-    title = getMetaData("xesam:title");
-    if (asprintf(&buffer, "%s - %s", artist, title) < 0);
-    //dsyslog("spotify: gotmetadata artist %s", artist);
-    cStatus::MsgReplaying(this, buffer, 0, false);
-    free(buffer);
-}
-
-void cSpotifyControl::Hide(void)
-{
-}
-
-eOSState cSpotifyControl::ProcessKey(eKeys Key)
-{
-    if (!player->Active())
-       return osEnd;
-    Show();
-    switch ((int)Key) {
-       case kBack:
-       case kBlue:
-           dsyslog("spotify: kBack or kBlue -> Stop()");
-           Stop();
-           return osBack;
-           break;
-       case kStop:
-           dsyslog("spotify: kStop -> Stop()");
-           Stop();
-           return osEnd;
-       default:
-           break;
-    }
-    return osContinue;
-}
-
-/// --- cMenuPlayer ----------------------------------------------
+/// --- cMenuSpotiMain ----------------------------------------------
 /// initial spotify Menu
 /// shows status of spotify player
 /// and starts metadata-player
-class cMenuPlayer:public cOsdMenu {
+class cMenuSpotiMain:public cOsdMenu {
    public:
-     cMenuPlayer(void);
+     cMenuSpotiMain(void);
      void Status(void);
+     virtual eOSState ProcessKey(eKeys Key);
 };
 
-cMenuPlayer::cMenuPlayer(void):cOsdMenu("Spotify")
+cMenuSpotiMain::cMenuSpotiMain(void):cOsdMenu("Spotify")
 {
-    dsyslog("spotify:cMenuPlayer created");
+    dsyslog("spotify: MainMenu created");
     Status();
-    cControl::Launch(new cSpotifyControl);
 }
 
-void cMenuPlayer::Status(void)
+void cMenuSpotiMain::Status(void)
 {
     if (getStatusPlaying()) {
-       Skins.Message(mtStatus,"Playing");
-       dsyslog("spotify: Playing");
+        Add(new cOsdItem("Playing", osUnknown, false));
+//       Skins.Message(mtStatus,"Playing",3);
     }
     else {
-       Skins.Message(mtStatus,"Not Playing");
-       dsyslog("spotify: Not Playing");
+        Add(new cOsdItem("Not Playing", osUnknown, false));
+//       Skins.Message(mtStatus,"Not Playing",3);
     }
     Display();
+}
+
+eOSState cMenuSpotiMain::ProcessKey(eKeys Key)
+{
+    eOSState state = cOsdMenu::ProcessKey(Key);
+    Status();
+    if (state == osUnknown) {
+       switch (Key) {
+           case kOk:
+               dsyslog("spotify: MainMenu kOk");
+               if (spotiControl == NULL) {
+                    cControl::Launch(new cSpotifyControl());
+               } else {
+                    dsyslog("spotify: use existing Control");
+                    cControl::Attach();
+               }
+               return osEnd;
+           case kBack:
+               dsyslog("spotify: MainMenu kBack");
+               return osBack;
+           case kBlue:
+               dsyslog("spotify: MainMenu kBlue");
+               // player->Quit
+               return osEnd;
+           default:
+               if (Key != kNone)
+                    dsyslog("spotify: MainMenu kUnknown");
+       }
+    }
+    return state;
 }
 
 class cPluginSpotify : public cPlugin {
@@ -211,8 +171,7 @@ time_t cPluginSpotify::WakeupTime(void)
 cOsdObject *cPluginSpotify::MainMenuAction(void)
 {
   // Perform the action when selected from the main VDR menu.
-  dsyslog("spotify: MainMenuAction");
-  return new cMenuPlayer;
+  return new cMenuSpotiMain;
 }
 
 cMenuSetupPage *cPluginSpotify::SetupMenu(void)

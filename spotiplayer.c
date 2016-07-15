@@ -1,10 +1,13 @@
 #include <vdr/tools.h>
 #include "spotiplayer.h"
 #include "spotidbus.h"
+#include "spoticontrol.h"
 
 // --- cSpotiPlayer --------------------------------------------------
 
 cSpotiPlayer::cSpotiPlayer(void)
+:cPlayer(pmAudioOnly)
+, cThread("spotify-Player")
 {
     run = true;
     dsyslog("spotify: Player created");
@@ -15,7 +18,20 @@ cSpotiPlayer::~cSpotiPlayer()
 {
     run = false;
     dsyslog("spotify: Player detached");
-    Detach();
+    Quit();
+    //Detach();
+}
+
+void cSpotiPlayer::Activate(bool On)
+{
+    if (On) {
+        dsyslog("spotify: Player_Activate On");
+        //runcommand Play
+    } else {
+        run = false;
+        Cancel(2);
+        dsyslog("spotify: Player_Activate False done");
+    }
 }
 
 void cSpotiPlayer::Action(void)
@@ -27,14 +43,35 @@ void cSpotiPlayer::Action(void)
 #endif
     while (run)
     {
-        if (!getStatusPlaying())
-            run = false;
 #if 0
-        artist = getMetaData("xesam:artist");
-        title = getMetaData("xesam:title");
-        dsyslog("got metadata %s : %s", artist,title);
-#endif
+        if (!getStatusPlaying()) {
+            dsyslog("spotify: Action False done");
+            run = false;
+        }
         // this is no control !!! cStatus::MsgReplaying(this, "TITLE", "ARTIST", true);
+#endif
         cCondWait::SleepMs(1000);
     }
+    Activate(false);
+}
+
+void cSpotiPlayer::Quit(void)
+{
+    dsyslog("spotify: Player Quit");
+    Cancel(3);
+    //Stop();
+    Detach();
+    cControl::Shutdown();
+}
+
+bool cSpotiPlayer::GetReplayMode(bool & Play, bool &Forward, int &Speed)
+{
+    //get state
+    if (getStatusPlaying())
+        Play = true;
+    else
+        Play = false;
+    Forward = true;
+    Speed = -1;
+    return true;
 }

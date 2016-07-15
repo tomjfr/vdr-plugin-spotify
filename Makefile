@@ -57,7 +57,7 @@ DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
 
 ### The object files (add further files here):
 
-OBJS = $(PLUGIN).o spotidbus.o spotiplayer.o
+OBJS = $(PLUGIN).o spotidbus.o spotiplayer.o spoticontrol.o
 
 ### The main target:
 

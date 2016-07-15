@@ -1,0 +1,7 @@
+.dependencies
+.indent.pro
+*.o
+*.so
+po/*.pot
+po/*.mo
+tags
