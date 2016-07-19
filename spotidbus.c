@@ -37,31 +37,25 @@ void print_iter(DBusMessageIter *MsgIter)
     int current_type;
     while ((current_type = dbus_message_iter_get_arg_type(MsgIter))
             != DBUS_TYPE_INVALID) {
-       printf("current type: %d\n", current_type);
        if (DBUS_TYPE_INT32 == dbus_message_iter_get_arg_type(MsgIter)){
           dbus_int32_t val;
           dbus_message_iter_get_basic(MsgIter, &val);
-          printf("Received int32: %d \n",val);
        }
        if (DBUS_TYPE_INT64 == dbus_message_iter_get_arg_type(MsgIter)){
           dbus_int64_t val;
           dbus_message_iter_get_basic(MsgIter, &val);
-          printf("Received int64: %" PRId64 " \n",val);
        }
        if (DBUS_TYPE_UINT64 == dbus_message_iter_get_arg_type(MsgIter)){
           dbus_uint64_t val;
           dbus_message_iter_get_basic(MsgIter, &val);
-          printf("Received uint64: %" PRIu64 " \n",val);
        }
        if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(MsgIter)){
           char* str = NULL;
           dbus_message_iter_get_basic(MsgIter, &str);
-          printf("Received string: \n %s \n",str);
           if (strncmp(str,"Playing",7)==0)
              spoti_playing=true;
           if (gotarray) {
              if (asprintf(&Mystring, "%s", str) < 0);
-             //dsyslog("spotify %s: %s", Myarray, Mystring);
              gotarray=false;
           }
           if (Myarray && (strcmp(str, Myarray)==0))
@@ -70,7 +64,6 @@ void print_iter(DBusMessageIter *MsgIter)
        if (DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type(MsgIter)){
           DBusMessageIter subiter;
           dbus_message_iter_recurse(MsgIter, &subiter);
-          printf("variant ");
           print_iter(&subiter);
        }
 
@@ -78,24 +71,19 @@ void print_iter(DBusMessageIter *MsgIter)
           int msg_type;
           DBusMessageIter subiter;
           dbus_message_iter_recurse(MsgIter, &subiter);
-          printf("array ");
           msg_type = dbus_message_iter_get_arg_type(&subiter);
           while (msg_type != DBUS_TYPE_INVALID) {
              print_iter(&subiter);
              dbus_message_iter_next(&subiter);
              msg_type = dbus_message_iter_get_arg_type(&subiter);
-             if (msg_type != DBUS_TYPE_INVALID)
-                printf("-------");
           }
        }
        if (DBUS_TYPE_DICT_ENTRY == dbus_message_iter_get_arg_type(MsgIter)){
           DBusMessageIter subiter;
           dbus_message_iter_recurse(MsgIter, &subiter);
-          printf("dict entry( \n");
           print_iter(&subiter);
           dbus_message_iter_next(&subiter);
           print_iter(&subiter);
-          printf(")\n");
        }
        dbus_message_iter_next(MsgIter);
     }
@@ -111,12 +99,12 @@ DBusMessage* sendMethodCall(const char* objectpath, const char* busname, const c
     //Now do a sync call
     DBusPendingCall* pending;
     DBusMessage* reply;
-    const char *string1 = "org.mpris.MediaPlayer2.Player";
-    //const char *string2 = "PlaybackStatus";
-    //     const char *string2 = "Metadata";
 
-    dbus_message_append_args (methodcall, DBUS_TYPE_STRING, &string1,
-        DBUS_TYPE_STRING, &string2, DBUS_TYPE_INVALID);
+    if (string2) {
+        const char *string1 = "org.mpris.MediaPlayer2.Player";
+        dbus_message_append_args (methodcall, DBUS_TYPE_STRING, &string1,
+            DBUS_TYPE_STRING, &string2, DBUS_TYPE_INVALID);
+    }
 
     //Send and expect reply using pending call object
     if (!dbus_connection_send_with_reply(conn, methodcall, &pending, -1))
@@ -153,6 +141,17 @@ bool getStatusPlaying(void)
    }
    //dbus_connection_close(conn);
    return false;
+}
+
+bool PlayerCmd(const char *cmd)
+{
+    // commands: next, previous, pause, stop, play
+    // not yet: shuffle
+   if (!vsetupconnection())
+      return false;
+   printf("PlayerCmd %s\n",cmd);
+   DBusMessage* reply = sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2.Player", cmd, NULL);
+   return true;
 }
 
 char *getMetaData(const char *arrayvalue)

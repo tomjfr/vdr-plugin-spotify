@@ -13,5 +13,6 @@ DBusMessage* sendMethodCall(const char* objectpath, const char* busname,
    const char* interfacename, const char* methodname);
 void print_iter(DBusMessageIter *iter);
 bool getStatusPlaying(void);
+bool PlayerCmd(const char *cmd);
 char* getMetaData(const char *arrayvalue);
 #endif //___SPOTIDBUS_H
