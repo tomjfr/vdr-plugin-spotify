@@ -113,6 +113,14 @@ install-lib: $(SOFILE)
 
 install: install-lib install-i18n
 
+indent:
+	for i in *.c *.h; do \
+	indent $$i; \
+	unexpand -a $$i | sed -e s/constconst/const/ > $$i.up; \
+	mv $$i.up $$i; \
+	rm $$i~; \
+	done
+
 dist: $(I18Npo) clean
 	@-rm -rf $(TMPDIR)/$(ARCHIVE)
 	@mkdir $(TMPDIR)/$(ARCHIVE)
