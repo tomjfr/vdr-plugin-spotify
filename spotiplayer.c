@@ -16,9 +16,7 @@ cThread("spotify-Player")
 cSpotiPlayer::~cSpotiPlayer()
 {
 	run = false;
-	dsyslog("spotify: Player detached");
 	Quit();
-	//Detach();
 }
 
 void cSpotiPlayer::Activate(bool On)
@@ -29,37 +27,24 @@ void cSpotiPlayer::Activate(bool On)
 	} else {
 		run = false;
 		Cancel(2);
-		dsyslog("spotify: Player_Activate False done");
 	}
-}
-
-void cSpotiPlayer::Action(void)
-{
-	dsyslog("spotify: playerthread started (pid=%d)", getpid());
-#if 0
-	char *artist;
-	char *title;
-#endif
-	while (run) {
-#if 0
-		if (!getStatusPlaying()) {
-			dsyslog("spotify: Action False done");
-			run = false;
-		}
-		// this is no control !!! cStatus::MsgReplaying(this, "TITLE", "ARTIST", true);
-#endif
-		cCondWait::SleepMs(1000);
-	}
-	Activate(false);
 }
 
 void cSpotiPlayer::Quit(void)
 {
 	dsyslog("spotify: Player Quit");
+	Activate(false);
 	Cancel(3);
-	//Stop();
 	Detach();
 	cControl::Shutdown();
+}
+
+void cSpotiPlayer::Action(void)
+{
+	while (run) {
+		cCondWait::SleepMs(1000);
+	}
+	dsyslog("spotify: player-Action ended");
 }
 
 bool cSpotiPlayer::GetIndex(int &Current, int &Total, bool SnapToIFrame)
@@ -73,8 +58,12 @@ bool cSpotiPlayer::GetIndex(int &Current, int &Total, bool SnapToIFrame)
 		Length = Total;
 		Start = time(NULL);
 	}
+	if (!getStatusPlaying())
+		Start++;
 	Total = SecondsToFrames(Total);
 	Current = SecondsToFrames(time(NULL) - Start);
+	if (Current < 0)
+		Current=0;
 	return true;
 }
 

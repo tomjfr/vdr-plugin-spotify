@@ -13,16 +13,15 @@
 #include "spotidbus.h"
 #include "spoticontrol.h"
 
-static const char *VERSION = "0.6";
-static const char *DESCRIPTION = "display spotify mediadata";
+static const char *VERSION = "0.7";
+static const char *DESCRIPTION = "spotify dbus interface";
 static const char *MAINMENUENTRY = "Spotify";
 
 cSpotifyControl *spotiControl = NULL;
 
 /// --- cMenuSpotiMain ----------------------------------------------
 /// initial spotify Menu
-/// shows status of spotify player
-/// and starts metadata-player
+/// and starts player
 class cMenuSpotiMain:public cOsdMenu
 {
 public:
@@ -34,26 +33,12 @@ public:
 cMenuSpotiMain::cMenuSpotiMain(void):cOsdMenu("Spotify")
 {
 	dsyslog("spotify: MainMenu created");
-	Status();
-}
-
-void cMenuSpotiMain::Status(void)
-{
-	if (getStatusPlaying()) {
-		Add(new cOsdItem("Playing", osUnknown, false));
-//   Skins.Message(mtStatus,"Playing",3);
-	} else {
-		Add(new cOsdItem("Not Playing", osUnknown, false));
-//   Skins.Message(mtStatus,"Not Playing",3);
-	}
-	Display();
 }
 
 eOSState cMenuSpotiMain::ProcessKey(eKeys Key)
 {
 	eOSState state = cOsdMenu::ProcessKey(Key);
 
-	Status();
 	if (state == osUnknown) {
 		switch (Key) {
 			case kOk:
@@ -70,7 +55,6 @@ eOSState cMenuSpotiMain::ProcessKey(eKeys Key)
 				return osBack;
 			case kBlue:
 				dsyslog("spotify: MainMenu kBlue");
-				// player->Quit
 				return osEnd;
 			default:
 				if (Key != kNone)
@@ -171,7 +155,7 @@ void cPluginSpotify::MainThreadHook(void)
 
 cString cPluginSpotify::Active(void)
 {
-	// Return a message string if shutdown should be postponed
+	// do we wish shutdown to be postponed then we need a string
 	return NULL;
 }
 

@@ -10,16 +10,16 @@ using namespace std;
 
 extern cSpotifyControl *spotiControl;
 
-cSpotifyControl::cSpotifyControl(void):cControl(player =
-	new cSpotiPlayer()), cThread("Spotify Control Thread")
+cSpotifyControl::cSpotifyControl(void):cControl(Player =
+	new cSpotiPlayer())
 {
 	visible = false;
 	running = true;
 	displayMenu = NULL;
+	ForkAndExec(); // start spotify binary
 	dsyslog("spotify: new Control");
 	spotiControl = this;
 	cStatus::MsgReplaying(this, "MP3", 0, true);
-	Start();
 }
 
 cSpotifyControl::~cSpotifyControl()
@@ -27,22 +27,39 @@ cSpotifyControl::~cSpotifyControl()
 	if (visible)
 		Hide();
 	running = false;
-	dsyslog("spotify: Control destroyed");
+	dsyslog("spotify: Control in Destroy");
 	cStatus::MsgReplaying(this, 0, 0, false);
-	if (player) {
-		Stop();
-		DELETENULL(player);
+	if (Player) {
+		dsyslog("spotify: send Quit");
+		Player->Quit();
+		dsyslog("spotify: quit spoti-binary");
+		SpotiCmd("Quit");
+		DELETENULL(Player);
 	}
 	spotiControl = NULL;
 }
 
-void cSpotifyControl::Stop(void)
+void cSpotifyControl::SpotiExec()
 {
-	dsyslog("spotify: Stop()");
-	cStatus::MsgReplaying(this, 0, 0, false);
-	delete player;
+	const char *args[2];
+	args[0] = "/usr/bin/spotify";
+	args[1] = NULL;
+	execvp(args[0], (char *const *)args);
+	dsyslog("spotify: execvp of '%s' failed: %s", args[0], strerror(errno));
+}
 
-	player = 0;
+void cSpotifyControl::ForkAndExec()
+{
+	pid_t pid;
+	if ((pid = fork()) == -1) {
+		dsyslog("spotify: Fork failed");
+		return;
+	}
+	if (!pid) { // child
+		SpotiExec();
+		return;
+	}
+	dsyslog("spotify: started binary with pid %d", pid);
 }
 
 void cSpotifyControl::ShowProgress(void)
@@ -54,7 +71,7 @@ void cSpotifyControl::ShowProgress(void)
 		string buffer;
 		int speed, Current, Total;
 
-		if (player && player->GetReplayMode(play, forward, speed)) {
+		if (Player && Player->GetReplayMode(play, forward, speed)) {
 			if (!visible)
 				return;
 			if (!displayMenu) {
@@ -63,12 +80,12 @@ void cSpotifyControl::ShowProgress(void)
 				displayMenu->SetTitle("Spotify PlayerControl");
 			}
 		}
-		if (!player)
+		if (!Player)
 			return;
 
 		artist = getMetaData("xesam:artist");
 		title = getMetaData("xesam:title");
-		player->GetIndex(Current, Total, false);
+		Player->GetIndex(Current, Total, false);
 		if (artist != "")
 			buffer = artist + " - " + title;
 		else
@@ -78,8 +95,7 @@ void cSpotifyControl::ShowProgress(void)
 		displayMenu->SetMode(play, forward, speed);
 		displayMenu->SetCurrent(IndexToHMSF(Current, false));
 		displayMenu->SetTotal(IndexToHMSF(Total, false));
-		//cStatus::MsgReplaying(this, buffer.c_str(), 0, true);
-		//free(buffer);
+		cStatus::MsgReplaying(this, buffer.c_str(), 0, true);
 		Skins.Flush();
 	}
 }
@@ -92,7 +108,6 @@ void cSpotifyControl::Show(void)
 		displayMenu->SetTitle("Spotify Replay");
 	}
 	visible = true;
-	BuildMsgReplay();
 	ShowProgress();
 }
 
@@ -106,12 +121,10 @@ void cSpotifyControl::Hide(void)
 
 eOSState cSpotifyControl::ProcessKey(eKeys Key)
 {
-	if (Key != kNone)
-		dsyslog("spotify: Control ProcessKey()");
 	eOSState state = osContinue;
 
 	Show();
-	if (!player->Active()) {
+	if (!Player->Active()) {
 		dsyslog("spotify: Control ProcessKey not active");
 		return osEnd;
 	}
@@ -161,33 +174,4 @@ eOSState cSpotifyControl::ProcessKey(eKeys Key)
 			break;
 	}
 	return state;
-}
-
-void cSpotifyControl::Action(void)
-// we must provide this routine but we are never started (no Start())
-// instead the player thread is started
-{
-	dsyslog("spotify: Control Action started");
-
-	while (running) {
-		cCondWait::SleepMs(1000);
-	}
-}
-
-void cSpotifyControl::BuildMsgReplay(void)
-{
-	string buf = "";
-	string artist;
-	string title;
-
-	artist = getMetaData("xesam:artist");
-	title = getMetaData("xesam:title");
-	//dsyslog("spotify: Control BuildMenu got %s - %s",artist.c_str(),title.c_str());
-	if (title != "") {
-		if (artist != "")
-			buf = artist + " - " + title;
-		else
-			buf = title;
-	}
-	cStatus::MsgReplaying(this, buf.c_str(), 0, true);
 }

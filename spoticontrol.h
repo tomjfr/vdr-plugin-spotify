@@ -2,20 +2,18 @@
 #define __SPOTI_CONTROL_H
 #include "spotiplayer.h"
 
-class cSpotifyControl:public cControl, public cThread
+class cSpotifyControl:public cControl
 {
 private:
-	cSpotiPlayer * player;
+	cSpotiPlayer * Player;
 	cSkinDisplayReplay *displayMenu;
 	bool running;
 	int visible;
-//    void Stop(void);
+	void SpotiExec(void);
+	void ForkAndExec(void);
 	void ShowProgress(void);
 	virtual void Show(void);
 	virtual void Hide(void);
-	void Stop(void);
-	void BuildMsgReplay(void);
-	virtual void Action(void);
 public:
 	 cSpotifyControl(void);
 	 virtual ~ cSpotifyControl();

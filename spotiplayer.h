@@ -9,7 +9,6 @@ class cSpotiPlayer:public cPlayer, public cThread
 {
 private:
 	bool run;
-	void Quit(void);
 protected:
 	 virtual void Activate(bool On);
 	virtual void Action(void);
@@ -18,6 +17,7 @@ public:
 	 virtual ~ cSpotiPlayer();
 	virtual bool GetIndex(int &Current, int &Total, bool SnapToIFrame = false);
 	virtual bool GetReplayMode(bool & Play, bool & Forward, int &Speed);
+	void Quit(void);
 	bool Active(void)
 	{
 		return run;

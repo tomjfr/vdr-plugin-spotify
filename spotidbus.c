@@ -177,11 +177,24 @@ bool PlayerCmd(const char *cmd)
 	return true;
 }
 
+bool SpotiCmd(const char *cmd)
+{
+	if (!vsetupconnection())
+		return false;
+	printf("SpotiCmd %s\n", cmd);
+	DBusMessage *reply =
+		sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2", cmd,
+		NULL);
+
+	return true;
+}
+
 char *getMetaData(const char *arrayvalue)
 {
 	if (!vsetupconnection())
 		return NULL;
 	Myarray = arrayvalue;
+	Mystring = "";
 	DBusMessage *reply =
 		sendMethodCall(OBJ_PATH, BUS_NAME, INTERFACE_NAME, METHOD_NAME,
 		"Metadata");
@@ -195,9 +208,8 @@ char *getMetaData(const char *arrayvalue)
 		print_iter(&MsgIter);
 		dbus_message_unref(reply);
 		Myarray = NULL;
-		return Mystring;
 	}
-	return NULL;
+	return Mystring;
 }
 
 int getLength(void)
@@ -219,7 +231,6 @@ int getLength(void)
 		print_iter(&MsgIter);
 		dbus_message_unref(reply);
 		Myarray = NULL;
-		return Myint;
 	}
-	return 0;
+	return Myint;
 }
