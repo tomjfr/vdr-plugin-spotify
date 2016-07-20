@@ -15,4 +15,5 @@ void print_iter(DBusMessageIter *iter);
 bool getStatusPlaying(void);
 bool PlayerCmd(const char *cmd);
 char* getMetaData(const char *arrayvalue);
+int getLength(void);
 #endif //___SPOTIDBUS_H

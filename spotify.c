@@ -12,7 +12,7 @@
 #include "spotidbus.h"
 #include "spoticontrol.h"
 
-static const char *VERSION        = "0.0.1";
+static const char *VERSION        = "0.6";
 static const char *DESCRIPTION    = "display spotify mediadata";
 static const char *MAINMENUENTRY  = "Spotify";
 

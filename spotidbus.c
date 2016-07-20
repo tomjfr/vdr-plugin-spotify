@@ -12,6 +12,7 @@ bool spoti_playing;
 bool gotarray;
 const char *Myarray;
 char *Mystring;
+int Myint;
 
 bool vsetupconnection()
 {
@@ -48,6 +49,10 @@ void print_iter(DBusMessageIter *MsgIter)
        if (DBUS_TYPE_UINT64 == dbus_message_iter_get_arg_type(MsgIter)){
           dbus_uint64_t val;
           dbus_message_iter_get_basic(MsgIter, &val);
+          if (gotarray) {
+             Myint=(int)val;
+             gotarray=false;
+          }
        }
        if (DBUS_TYPE_STRING == dbus_message_iter_get_arg_type(MsgIter)){
           char* str = NULL;
@@ -171,4 +176,24 @@ char *getMetaData(const char *arrayvalue)
       return Mystring;
    }
    return NULL;
+}
+
+int  getLength(void)
+{
+   if (!vsetupconnection())
+      return 0;
+   Myarray= "mpris:length";
+   Myint=0;
+   DBusMessage* reply = sendMethodCall(OBJ_PATH, BUS_NAME, INTERFACE_NAME, METHOD_NAME, "Metadata");
+   if (reply != NULL) {
+      DBusMessageIter MsgIter;
+      dbus_message_iter_init(reply, &MsgIter);
+      //gotartist = gottitle  = false;
+      gotarray = false;
+      print_iter(&MsgIter);
+      dbus_message_unref(reply);
+      Myarray = NULL;
+      return Myint;
+   }
+   return 0;
 }
