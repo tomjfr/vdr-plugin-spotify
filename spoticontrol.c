@@ -74,9 +74,9 @@ void cSpotifyControl::ShowProgress(void)
         else
             buffer = title;
         displayMenu->SetMessage(mtInfo, buffer.c_str());
-        displayMenu->SetMode(play, 1, 1);
-        displayMenu->SetProgress(0, Total);
-        displayMenu->SetCurrent(0);
+        displayMenu->SetProgress(Current, Total);
+        displayMenu->SetMode(play, forward, speed);
+        displayMenu->SetCurrent(IndexToHMSF(Current,false));
         displayMenu->SetTotal(IndexToHMSF(Total,false));
         //cStatus::MsgReplaying(this, buffer.c_str(), 0, true);
         //free(buffer);

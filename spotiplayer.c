@@ -66,11 +66,19 @@ void cSpotiPlayer::Quit(void)
 
 bool cSpotiPlayer::GetIndex(int &Current, int &Total, bool SnapToIFrame)
 {
+    static int Length = 0;
+    static time_t Start;
     Current = 0;
     Total = getLength()/1000000;
+    if (Total != Length) {
+        Length = Total;
+        Start = time(NULL);
+    }
     Total = SecondsToFrames(Total);
+    Current = SecondsToFrames(time(NULL) - Start);
     return true;
 }
+
 bool cSpotiPlayer::GetReplayMode(bool & Play, bool &Forward, int &Speed)
 {
     //get state
