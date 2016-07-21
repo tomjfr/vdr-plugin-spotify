@@ -5,14 +5,12 @@
 class cSpotifyControl:public cControl
 {
 private:
-	cSpotiPlayer * Player;
 	cSkinDisplayReplay *displayMenu;
 	bool running;
 	int visible;
 	void SpotiExec(void);
 	void ForkAndExec(void);
 	void ShowProgress(void);
-	virtual void Show(void);
 	virtual void Hide(void);
 public:
 	 cSpotifyControl(void);

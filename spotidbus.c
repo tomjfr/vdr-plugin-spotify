@@ -11,7 +11,7 @@ DBusConnection *conn;
 bool spoti_playing;
 bool gotarray;
 const char *Myarray;
-char *Mystring;
+string Mystring;
 int Myint;
 
 bool vsetupconnection()
@@ -54,7 +54,7 @@ void print_iter(DBusMessageIter * MsgIter)
 
 			dbus_message_iter_get_basic(MsgIter, &val);
 			if (gotarray) {
-				Myint = (int)val;
+				Myint = (int)val; // MediaData->Length
 				gotarray = false;
 			}
 		}
@@ -65,10 +65,12 @@ void print_iter(DBusMessageIter * MsgIter)
 			if (strncmp(str, "Playing", 7) == 0)
 				spoti_playing = true;
 			if (gotarray) {
-				if (asprintf(&Mystring, "%s", str) < 0) ;
+				Mystring = str;
+//				if (asprintf(&Mystring, "%s", str) < 0) ;
 				gotarray = false;
 			}
-			if (Myarray && (strcmp(str, Myarray) == 0))
+			if (Myarray && (strcmp(str, Myarray) == 0)) // found wanted entry
+//			if (Myarray && (Myarray == str)) // == not working here!
 				gotarray = true;
 		}
 		if (DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type(MsgIter)) {
@@ -105,26 +107,31 @@ void print_iter(DBusMessageIter * MsgIter)
 DBusMessage *sendMethodCall(const char *objectpath, const char *busname,
 	const char *interfacename, const char *methodname, const char *string2)
 {
+	DBusPendingCall *pending;
+	DBusMessage *reply = NULL;
+
 	DBusMessage *methodcall =
 		dbus_message_new_method_call(busname, objectpath, interfacename,
 		methodname);
-
 	if (methodcall == NULL) {
 		printf("Cannot allocate DBus message!\n");
+		return reply;
 	}
-	//Now do a sync call
-	DBusPendingCall *pending;
-	DBusMessage *reply;
 
 	if (string2) {
 		const char *string1 = "org.mpris.MediaPlayer2.Player";
 
-		dbus_message_append_args(methodcall, DBUS_TYPE_STRING, &string1,
-			DBUS_TYPE_STRING, &string2, DBUS_TYPE_INVALID);
+		if (!dbus_message_append_args(methodcall, DBUS_TYPE_STRING, &string1,
+			DBUS_TYPE_STRING, &string2, DBUS_TYPE_INVALID)) {
+			printf("Cannot allocate DBus message args!\n");
+			return reply;
+		}
 	}
 	//Send and expect reply using pending call object
-	if (!dbus_connection_send_with_reply(conn, methodcall, &pending, -1))
+	if (!dbus_connection_send_with_reply(conn, methodcall, &pending, -1)) {
 		printf("failed to send message!\n");
+		return reply;
+	}
 	dbus_connection_flush(conn);
 	dbus_message_unref(methodcall);
 	methodcall = NULL;
@@ -154,13 +161,11 @@ bool getStatusPlaying(void)
 		DBusMessageIter MsgIter;
 
 		dbus_message_iter_init(reply, &MsgIter);
-		print_iter(&MsgIter);
+		print_iter(&MsgIter);  //sets spoti_playing if status==play
 		dbus_message_unref(reply);
-		if (spoti_playing)
-			return true;
 	}
-	//dbus_connection_close(conn);
-	return false;
+	dbus_connection_close(conn);
+	return spoti_playing;
 }
 
 bool PlayerCmd(const char *cmd)
@@ -174,6 +179,7 @@ bool PlayerCmd(const char *cmd)
 		sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2.Player", cmd,
 		NULL);
 
+	dbus_connection_close(conn);
 	return true;
 }
 
@@ -186,51 +192,54 @@ bool SpotiCmd(const char *cmd)
 		sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2", cmd,
 		NULL);
 
+	dbus_connection_close(conn);
 	return true;
 }
 
-char *getMetaData(const char *arrayvalue)
+string getMetaData(const char *arrayvalue)
 {
-	if (!vsetupconnection())
-		return NULL;
-	Myarray = arrayvalue;
 	Mystring = "";
-	DBusMessage *reply =
-		sendMethodCall(OBJ_PATH, BUS_NAME, INTERFACE_NAME, METHOD_NAME,
-		"Metadata");
+	if (vsetupconnection()) {
+		Myarray = arrayvalue;
+		DBusMessage *reply =
+			sendMethodCall(OBJ_PATH, BUS_NAME, INTERFACE_NAME, METHOD_NAME,
+			"Metadata");
 
-	if (reply != NULL) {
-		DBusMessageIter MsgIter;
+		if (reply != NULL) {
+			DBusMessageIter MsgIter;
 
-		dbus_message_iter_init(reply, &MsgIter);
-		//gotartist = gottitle	= false;
-		gotarray = false;
-		print_iter(&MsgIter);
-		dbus_message_unref(reply);
-		Myarray = NULL;
+			dbus_message_iter_init(reply, &MsgIter);
+			//gotartist = gottitle	= false;
+			gotarray = false;
+			print_iter(&MsgIter);
+			dbus_message_unref(reply);
+			Myarray = NULL;
+		}
+		dbus_connection_close(conn);
 	}
 	return Mystring;
 }
 
 int getLength(void)
 {
-	if (!vsetupconnection())
-		return 0;
-	Myarray = "mpris:length";
 	Myint = 0;
-	DBusMessage *reply =
-		sendMethodCall(OBJ_PATH, BUS_NAME, INTERFACE_NAME, METHOD_NAME,
-		"Metadata");
+	if (vsetupconnection()) {
+		Myarray = "mpris:length";
+		DBusMessage *reply =
+			sendMethodCall(OBJ_PATH, BUS_NAME, INTERFACE_NAME, METHOD_NAME,
+			"Metadata");
 
-	if (reply != NULL) {
-		DBusMessageIter MsgIter;
+		if (reply != NULL) {
+			DBusMessageIter MsgIter;
 
-		dbus_message_iter_init(reply, &MsgIter);
-		//gotartist = gottitle	= false;
-		gotarray = false;
-		print_iter(&MsgIter);
-		dbus_message_unref(reply);
-		Myarray = NULL;
+			dbus_message_iter_init(reply, &MsgIter);
+			//gotartist = gottitle	= false;
+			gotarray = false;
+			print_iter(&MsgIter); //sets Myint to Length
+			dbus_message_unref(reply);
+			Myarray = NULL;
+		}
+		dbus_connection_close(conn);
 	}
 	return Myint;
 }

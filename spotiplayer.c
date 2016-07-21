@@ -49,6 +49,8 @@ void cSpotiPlayer::Action(void)
 
 bool cSpotiPlayer::GetIndex(int &Current, int &Total, bool SnapToIFrame)
 {
+	// we cannot use Player2.Pos(), this is always 0
+	// for the first song - Current might be wrong
 	static int Length = 0;
 	static time_t Start;
 
@@ -58,7 +60,7 @@ bool cSpotiPlayer::GetIndex(int &Current, int &Total, bool SnapToIFrame)
 		Length = Total;
 		Start = time(NULL);
 	}
-	if (!getStatusPlaying())
+	if (!getStatusPlaying()) // paused
 		Start++;
 	Total = SecondsToFrames(Total);
 	Current = SecondsToFrames(time(NULL) - Start);

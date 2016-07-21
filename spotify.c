@@ -18,6 +18,7 @@ static const char *DESCRIPTION = "spotify dbus interface";
 static const char *MAINMENUENTRY = "Spotify";
 
 cSpotifyControl *spotiControl = NULL;
+cSpotiPlayer *spotiPlayer = NULL;
 
 /// --- cMenuSpotiMain ----------------------------------------------
 /// initial spotify Menu
@@ -33,6 +34,7 @@ public:
 cMenuSpotiMain::cMenuSpotiMain(void):cOsdMenu("Spotify")
 {
 	dsyslog("spotify: MainMenu created");
+	SetHelp(tr(""), tr(""), tr("Start Player"), tr("Exit"));
 }
 
 eOSState cMenuSpotiMain::ProcessKey(eKeys Key)
@@ -42,8 +44,9 @@ eOSState cMenuSpotiMain::ProcessKey(eKeys Key)
 	if (state == osUnknown) {
 		switch (Key) {
 			case kOk:
+			case kYellow:
 				dsyslog("spotify: MainMenu kOk");
-				if (spotiControl == NULL) {
+				if (!spotiControl) {
 					cControl::Launch(new cSpotifyControl());
 				} else {
 					dsyslog("spotify: use existing Control");
@@ -55,6 +58,8 @@ eOSState cMenuSpotiMain::ProcessKey(eKeys Key)
 				return osBack;
 			case kBlue:
 				dsyslog("spotify: MainMenu kBlue");
+				if (spotiPlayer)
+					spotiPlayer->Quit();
 				return osEnd;
 			default:
 				if (Key != kNone)

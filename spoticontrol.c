@@ -9,11 +9,12 @@ using namespace std;
 #include "spoticontrol.h"
 
 extern cSpotifyControl *spotiControl;
+extern cSpotiPlayer *spotiPlayer;
 
-cSpotifyControl::cSpotifyControl(void):cControl(Player =
+cSpotifyControl::cSpotifyControl(void):cControl(spotiPlayer =
 	new cSpotiPlayer())
 {
-	visible = false;
+	visible = true;
 	running = true;
 	displayMenu = NULL;
 	ForkAndExec(); // start spotify binary
@@ -29,12 +30,12 @@ cSpotifyControl::~cSpotifyControl()
 	running = false;
 	dsyslog("spotify: Control in Destroy");
 	cStatus::MsgReplaying(this, 0, 0, false);
-	if (Player) {
+	if (spotiPlayer) {
 		dsyslog("spotify: send Quit");
-		Player->Quit();
+		spotiPlayer->Quit();
 		dsyslog("spotify: quit spoti-binary");
 		SpotiCmd("Quit");
-		DELETENULL(Player);
+		DELETENULL(spotiPlayer);
 	}
 	spotiControl = NULL;
 }
@@ -71,21 +72,25 @@ void cSpotifyControl::ShowProgress(void)
 		string buffer;
 		int speed, Current, Total;
 
-		if (Player && Player->GetReplayMode(play, forward, speed)) {
+		if (spotiPlayer) {
 			if (!visible)
 				return;
 			if (!displayMenu) {
 				dsyslog("spotify:  ShowProgress creates displaymenu");
 				displayMenu = Skins.Current()->DisplayReplay(false);
-				displayMenu->SetTitle("Spotify PlayerControl");
+				displayMenu->SetTitle("Spotify Replay");
+				// not working in DisplayReplay
+				// displayMenu->SetButtons(tr(""),tr("Previous"),tr("Next"),tr("Exit"));
+				// not working displayMenu->SetMessage(mtInfo, "<Blue> to Exit");
 			}
 		}
-		if (!Player)
+		else // !spotiPlayer
 			return;
 
 		artist = getMetaData("xesam:artist");
 		title = getMetaData("xesam:title");
-		Player->GetIndex(Current, Total, false);
+		spotiPlayer->GetReplayMode(play, forward, speed);
+		spotiPlayer->GetIndex(Current, Total, false);
 		if (artist != "")
 			buffer = artist + " - " + title;
 		else
@@ -100,17 +105,6 @@ void cSpotifyControl::ShowProgress(void)
 	}
 }
 
-void cSpotifyControl::Show(void)
-{
-	if ((!displayMenu && !cOsd::IsOpen())) {
-		dsyslog("spotify:  Show creates displaymenu");
-		displayMenu = Skins.Current()->DisplayReplay(false);
-		displayMenu->SetTitle("Spotify Replay");
-	}
-	visible = true;
-	ShowProgress();
-}
-
 void cSpotifyControl::Hide(void)
 {
 	if (displayMenu)
@@ -121,10 +115,8 @@ void cSpotifyControl::Hide(void)
 
 eOSState cSpotifyControl::ProcessKey(eKeys Key)
 {
-	eOSState state = osContinue;
-
-	Show();
-	if (!Player->Active()) {
+	ShowProgress(); // called every second
+	if (!spotiPlayer->Active()) {
 		dsyslog("spotify: Control ProcessKey not active");
 		return osEnd;
 	}
@@ -144,8 +136,10 @@ eOSState cSpotifyControl::ProcessKey(eKeys Key)
 			dsyslog("spotify: kOk");
 			if (visible)
 				Hide();
-			else
-				Show();
+			else {
+				visible = true;
+				ShowProgress();
+			}
 			break;
 		case kUp:
 		case kPlay:
@@ -161,17 +155,18 @@ eOSState cSpotifyControl::ProcessKey(eKeys Key)
 			dsyslog("spotify: kPause");
 			PlayerCmd("Pause");
 			break;
+		case kYellow:
 		case kNext:
 			dsyslog("spotify: kNext");
 			PlayerCmd("Next");
 			break;
+		case kGreen:
 		case kPrev:
 			dsyslog("spotify: kPrev");
 			PlayerCmd("Previous");
 			break;
 		default:
-			state = osContinue;
 			break;
 	}
-	return state;
+	return osContinue;
 }

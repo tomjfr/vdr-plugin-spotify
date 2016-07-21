@@ -6,6 +6,8 @@
 #include <dbus/dbus.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <string>
+using namespace std;
 
 //Helper function to setup connection
 bool vsetupconnection();
@@ -15,6 +17,6 @@ void print_iter(DBusMessageIter * iter);
 bool getStatusPlaying(void);
 bool PlayerCmd(const char *cmd);
 bool SpotiCmd(const char *cmd);
-char *getMetaData(const char *arrayvalue);
+string getMetaData(const char *arrayvalue);
 int getLength(void);
 #endif //___SPOTIDBUS_H
