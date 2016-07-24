@@ -9,6 +9,7 @@
 
 DBusConnection *conn;
 bool spoti_playing;
+bool conn_ok;
 bool gotarray;
 const char *Myarray;
 string Mystring;
@@ -151,20 +152,19 @@ DBusMessage *sendMethodCall(const char *objectpath, const char *busname,
 bool getStatusPlaying(void)
 {
 	spoti_playing = false;
-	if (!vsetupconnection())
-		return false;
-	DBusMessage *reply =
-		sendMethodCall(OBJ_PATH, BUS_NAME, INTERFACE_NAME, METHOD_NAME,
-		"PlaybackStatus");
+	if (vsetupconnection()) {
+		DBusMessage *reply =
+			sendMethodCall(OBJ_PATH, BUS_NAME, INTERFACE_NAME, METHOD_NAME,
+			"PlaybackStatus");
 
-	if (reply != NULL) {
-		DBusMessageIter MsgIter;
+		if (reply != NULL) {
+			DBusMessageIter MsgIter;
 
-		dbus_message_iter_init(reply, &MsgIter);
-		print_iter(&MsgIter);  //sets spoti_playing if status==play
-		dbus_message_unref(reply);
+			dbus_message_iter_init(reply, &MsgIter);
+			print_iter(&MsgIter);  //sets spoti_playing if status==play
+			dbus_message_unref(reply);
+		}
 	}
-	dbus_connection_close(conn);
 	return spoti_playing;
 }
 
@@ -179,7 +179,6 @@ bool PlayerCmd(const char *cmd)
 		sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2.Player", cmd,
 		NULL);
 
-	dbus_connection_close(conn);
 	return true;
 }
 
@@ -192,7 +191,6 @@ bool SpotiCmd(const char *cmd)
 		sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2", cmd,
 		NULL);
 
-	dbus_connection_close(conn);
 	return true;
 }
 
@@ -206,6 +204,7 @@ string getMetaData(const char *arrayvalue)
 			"Metadata");
 
 		if (reply != NULL) {
+			conn_ok = true;
 			DBusMessageIter MsgIter;
 
 			dbus_message_iter_init(reply, &MsgIter);
@@ -215,7 +214,8 @@ string getMetaData(const char *arrayvalue)
 			dbus_message_unref(reply);
 			Myarray = NULL;
 		}
-		dbus_connection_close(conn);
+		else
+			conn_ok = false;
 	}
 	return Mystring;
 }
@@ -239,7 +239,6 @@ int getLength(void)
 			dbus_message_unref(reply);
 			Myarray = NULL;
 		}
-		dbus_connection_close(conn);
 	}
 	return Myint;
 }

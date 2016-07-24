@@ -1,3 +1,5 @@
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <string>
 using namespace std;
 
@@ -10,12 +12,15 @@ using namespace std;
 
 extern cSpotifyControl *spotiControl;
 extern cSpotiPlayer *spotiPlayer;
+extern bool conn_ok;
 
 cSpotifyControl::cSpotifyControl(void):cControl(spotiPlayer =
 	new cSpotiPlayer())
 {
 	visible = true;
-	running = true;
+	conn_ok = false;
+	pid = -1;
+	starting = true;
 	displayMenu = NULL;
 	ForkAndExec(); // start spotify binary
 	dsyslog("spotify: new Control");
@@ -27,7 +32,6 @@ cSpotifyControl::~cSpotifyControl()
 {
 	if (visible)
 		Hide();
-	running = false;
 	dsyslog("spotify: Control in Destroy");
 	cStatus::MsgReplaying(this, 0, 0, false);
 	if (spotiPlayer) {
@@ -35,6 +39,14 @@ cSpotifyControl::~cSpotifyControl()
 		spotiPlayer->Quit();
 		dsyslog("spotify: quit spoti-binary");
 		SpotiCmd("Quit");
+		cCondWait::SleepMs(250);
+		if (waitpid(pid,0,WNOHANG)==0) { // Child still active
+			dsyslog("spotify: kill binary");
+			kill(pid,SIGTERM);
+		}
+		if (pid > 0)
+			waitpid(pid,0,0);
+		pid = -1;
 		DELETENULL(spotiPlayer);
 	}
 	spotiControl = NULL;
@@ -51,13 +63,13 @@ void cSpotifyControl::SpotiExec()
 
 void cSpotifyControl::ForkAndExec()
 {
-	pid_t pid;
 	if ((pid = fork()) == -1) {
 		dsyslog("spotify: Fork failed");
 		return;
 	}
 	if (!pid) { // child
 		SpotiExec();
+		// should not be reached
 		return;
 	}
 	dsyslog("spotify: started binary with pid %d", pid);
@@ -65,6 +77,15 @@ void cSpotifyControl::ForkAndExec()
 
 void cSpotifyControl::ShowProgress(void)
 {
+	if (conn_ok && starting) // 1st succesful connect to binary
+		starting = false;
+	if (!conn_ok)
+		if (!starting) { // error in running binary
+			starting = true; // ??
+			if (spotiPlayer)
+				spotiPlayer->Quit();
+			return;
+		}
 	if (displayMenu || (!cOsd::IsOpen())) {
 		bool play, forward;
 		string artist;
@@ -116,7 +137,7 @@ void cSpotifyControl::Hide(void)
 eOSState cSpotifyControl::ProcessKey(eKeys Key)
 {
 	ShowProgress(); // called every second
-	if (!spotiPlayer->Active()) {
+	if (!spotiPlayer || !spotiPlayer->Active()) {
 		dsyslog("spotify: Control ProcessKey not active");
 		return osEnd;
 	}

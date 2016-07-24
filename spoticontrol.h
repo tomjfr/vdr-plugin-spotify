@@ -6,8 +6,9 @@ class cSpotifyControl:public cControl
 {
 private:
 	cSkinDisplayReplay *displayMenu;
-	bool running;
+	bool starting;
 	int visible;
+	pid_t pid; // Pid of Childprocess (Spotify binary)
 	void SpotiExec(void);
 	void ForkAndExec(void);
 	void ShowProgress(void);
