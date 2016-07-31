@@ -32,7 +32,7 @@ cSpotifyControl::~cSpotifyControl()
 {
 	if (visible)
 		Hide();
-	dsyslog("spotify: Control in Destroy");
+	dsyslog("spotify: delete Control");
 	cStatus::MsgReplaying(this, 0, 0, false);
 	if (spotiPlayer) {
 		dsyslog("spotify: send Quit");
@@ -44,8 +44,10 @@ cSpotifyControl::~cSpotifyControl()
 			dsyslog("spotify: kill binary");
 			kill(pid,SIGTERM);
 		}
-		if (pid > 0)
+		if (pid > 0) {
+			dsyslog("spotify: wait for child");
 			waitpid(pid,0,0);
+		}
 		pid = -1;
 		DELETENULL(spotiPlayer);
 	}
@@ -82,8 +84,10 @@ void cSpotifyControl::ShowProgress(void)
 	if (!conn_ok)
 		if (!starting) { // error in running binary
 			starting = true; // ??
-			if (spotiPlayer)
+			if (spotiPlayer) {
+				dsyslog("spotify: connection error");
 				spotiPlayer->Quit();
+			}
 			return;
 		}
 	if (displayMenu || (!cOsd::IsOpen())) {

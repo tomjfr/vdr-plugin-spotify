@@ -16,6 +16,7 @@ cThread("spotify-Player")
 cSpotiPlayer::~cSpotiPlayer()
 {
 	run = false;
+	dsyslog("spotify: delete Player");
 	Quit();
 }
 

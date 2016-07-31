@@ -67,11 +67,9 @@ void print_iter(DBusMessageIter * MsgIter)
 				spoti_playing = true;
 			if (gotarray) {
 				Mystring = str;
-//				if (asprintf(&Mystring, "%s", str) < 0) ;
 				gotarray = false;
 			}
 			if (Myarray && (strcmp(str, Myarray) == 0)) // found wanted entry
-//			if (Myarray && (Myarray == str)) // == not working here!
 				gotarray = true;
 		}
 		if (DBUS_TYPE_VARIANT == dbus_message_iter_get_arg_type(MsgIter)) {
@@ -115,7 +113,7 @@ DBusMessage *sendMethodCall(const char *objectpath, const char *busname,
 		dbus_message_new_method_call(busname, objectpath, interfacename,
 		methodname);
 	if (methodcall == NULL) {
-		printf("Cannot allocate DBus message!\n");
+		esyslog("spotify: Cannot allocate DBus message!");
 		return reply;
 	}
 
@@ -124,13 +122,13 @@ DBusMessage *sendMethodCall(const char *objectpath, const char *busname,
 
 		if (!dbus_message_append_args(methodcall, DBUS_TYPE_STRING, &string1,
 			DBUS_TYPE_STRING, &string2, DBUS_TYPE_INVALID)) {
-			printf("Cannot allocate DBus message args!\n");
+			esyslog("spotify: Cannot allocate DBus message args!");
 			return reply;
 		}
 	}
 	//Send and expect reply using pending call object
 	if (!dbus_connection_send_with_reply(conn, methodcall, &pending, -1)) {
-		printf("failed to send message!\n");
+		esyslog("spotify: failed to send message!");
 		return reply;
 	}
 	dbus_connection_flush(conn);
@@ -142,7 +140,7 @@ DBusMessage *sendMethodCall(const char *objectpath, const char *busname,
 	dbus_pending_call_unref(pending);			//Free pending call handle
 
 	if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_ERROR) {
-		printf("Error : %s", dbus_message_get_error_name(reply));
+		esyslog("spotify: Error : %s", dbus_message_get_error_name(reply));
 		dbus_message_unref(reply);
 		reply = NULL;
 	}
@@ -174,7 +172,7 @@ bool PlayerCmd(const char *cmd)
 	// not yet: shuffle
 	if (!vsetupconnection())
 		return false;
-	printf("PlayerCmd %s\n", cmd);
+	dsyslog("spotify: PlayerCmd %s\n", cmd);
 	DBusMessage *reply =
 		sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2.Player", cmd,
 		NULL);
@@ -186,7 +184,7 @@ bool SpotiCmd(const char *cmd)
 {
 	if (!vsetupconnection())
 		return false;
-	printf("SpotiCmd %s\n", cmd);
+	dsyslog("spotify: SpotiCmd %s\n", cmd);
 	DBusMessage *reply =
 		sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2", cmd,
 		NULL);
