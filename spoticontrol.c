@@ -117,9 +117,9 @@ void cSpotifyControl::ShowProgress(void)
 		spotiPlayer->GetReplayMode(play, forward, speed);
 		spotiPlayer->GetIndex(Current, Total, false);
 		if (artist != "")
-			buffer = artist + " - " + title;
+			buffer = "[SPOT] " + artist + " - " + title;
 		else
-			buffer = title;
+			buffer = "[SPOT] " + title;
 		displayMenu->SetMessage(mtInfo, buffer.c_str());
 		displayMenu->SetProgress(Current, Total);
 		displayMenu->SetMode(play, forward, speed);

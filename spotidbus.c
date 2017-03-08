@@ -1,5 +1,4 @@
 #include <string.h>
-#include <vdr/tools.h>
 #include "spotidbus.h"
 
 #define BUS_NAME	       "org.mpris.MediaPlayer2.spotify"
@@ -12,7 +11,8 @@ bool spoti_playing;
 bool conn_ok;
 bool gotarray;
 const char *Myarray;
-string Mystring;
+cMutex _mutex;
+cString Mystring;
 int Myint;
 
 bool vsetupconnection()
@@ -106,6 +106,7 @@ void print_iter(DBusMessageIter * MsgIter)
 DBusMessage *sendMethodCall(const char *objectpath, const char *busname,
 	const char *interfacename, const char *methodname, const char *string2)
 {
+	cMutexLock lock(&_mutex);  // we must serialize the calls
 	DBusPendingCall *pending;
 	DBusMessage *reply = NULL;
 
@@ -127,8 +128,12 @@ DBusMessage *sendMethodCall(const char *objectpath, const char *busname,
 		}
 	}
 	//Send and expect reply using pending call object
-	if (!dbus_connection_send_with_reply(conn, methodcall, &pending, -1)) {
+	if (!dbus_connection_send_with_reply(conn, methodcall, &pending, 1000)) {
 		esyslog("spotify: failed to send message!");
+		return reply;
+	}
+	if (!pending) {
+		esyslog("spotify: Pending call Null!");
 		return reply;
 	}
 	dbus_connection_flush(conn);
@@ -136,7 +141,16 @@ DBusMessage *sendMethodCall(const char *objectpath, const char *busname,
 	methodcall = NULL;
 
 	dbus_pending_call_block(pending);			//Now block on the pending call
+	if ( !dbus_pending_call_get_completed(pending)) {
+			esyslog("spotify: Pending call not completed!");
+			dbus_pending_call_unref(pending);
+			return reply;
+			}
 	reply = dbus_pending_call_steal_reply(pending);	//Get the reply message from the queue
+	if (!reply) {
+		esyslog("spotify: Reply Null!");
+		return reply;
+	}
 	dbus_pending_call_unref(pending);			//Free pending call handle
 
 	if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_ERROR) {
@@ -177,6 +191,9 @@ bool PlayerCmd(const char *cmd)
 		sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2.Player", cmd,
 		NULL);
 
+	if (reply != NULL)
+		dbus_message_unref(reply);
+
 	return true;
 }
 
@@ -189,10 +206,13 @@ bool SpotiCmd(const char *cmd)
 		sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2", cmd,
 		NULL);
 
+	if (reply != NULL)
+		dbus_message_unref(reply);
+
 	return true;
 }
 
-string getMetaData(const char *arrayvalue)
+cString getMetaData(const char *arrayvalue)
 {
 	Mystring = "";
 	if (vsetupconnection()) {
