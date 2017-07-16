@@ -1,0 +1,30 @@
+Copyright (C) 2016-2017 Johann Friedrichs
+
+This file is part of vdr-plugin-spotify,
+a  "plugin" for the Video Disk Recorder (VDR).
+
+vdr-plugin-spotify is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+vdr-plugin-spotify is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with vdr-plugin-spotify.  If not, see <http://www.gnu.org/licenses/>.
+
+This plugin needs pkg "spotify-client" and a spotify license applied to
+the client.
+
+Calling this plugin from the main menu, allows you to start the
+spotify-client-binary from vdr with "OK" or "YELLOW".
+With PLAY,PAUSE,NEXT etc. the last remembered playlist can be heard.
+
+Using a different device with a spotify client or app, Spotify-Direct can
+be used to control the vdr-plugin and to listen to your music on the same
+device vdr outputs its audio to.
+
+The plugin is stopped with the BLUE-Key.

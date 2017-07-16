@@ -1,0 +1,14 @@
+--- a/state.c
++++ b/state.c
+@@ -308,6 +309,11 @@ void cGraphLCDState::Replaying(const cCo
+                         mReplay.mode = eReplayImage;
+                         bFound = true;
+                     }
++                    else if (0 == strncmp(Name,"[SPOT] ",7))
++                    {
++                        mReplay.name = Name + 7;
++                        bFound = true;
++                    }
+                     else if (0 == strncmp(Name,"[audiocd] ",10))
+                     {
+                         mReplay.name = Name + 10;
