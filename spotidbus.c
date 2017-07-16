@@ -125,7 +125,6 @@ void print_iter(DBusMessageIter * MsgIter)
 DBusMessage *sendMethodCall(const char *objectpath, const char *busname,
 	const char *interfacename, const char *methodname, const char *string2)
 {
-	cMutexLock lock(&_mutex);  // we must serialize the calls
 	DBusPendingCall *pending;
 	DBusMessage *reply = NULL;
 
@@ -184,6 +183,7 @@ bool getStatusPlaying(void)
 {
 	spoti_playing = false;
 	if (vsetupconnection()) {
+		cMutexLock lock(&_mutex);  // we must serialize the calls
 		DBusMessage *reply =
 			sendMethodCall(OBJ_PATH, BUS_NAME, INTERFACE_NAME, METHOD_NAME,
 			"PlaybackStatus");
@@ -206,6 +206,7 @@ bool PlayerCmd(const char *cmd)
 	if (!vsetupconnection())
 		return false;
 	dsyslog("spotify: PlayerCmd %s\n", cmd);
+	cMutexLock lock(&_mutex);  // we must serialize the calls
 	DBusMessage *reply =
 		sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2.Player", cmd,
 		NULL);
@@ -221,6 +222,7 @@ bool SpotiCmd(const char *cmd)
 	if (!vsetupconnection())
 		return false;
 	dsyslog("spotify: SpotiCmd %s\n", cmd);
+	cMutexLock lock(&_mutex);  // we must serialize the calls
 	DBusMessage *reply =
 		sendMethodCall(OBJ_PATH, BUS_NAME, "org.mpris.MediaPlayer2", cmd,
 		NULL);
@@ -235,6 +237,7 @@ cString getMetaData(const char *arrayvalue)
 {
 	Mystring = "";
 	if (vsetupconnection()) {
+		cMutexLock lock(&_mutex);  // we must serialize the calls
 		Myarray = arrayvalue;
 		DBusMessage *reply =
 			sendMethodCall(OBJ_PATH, BUS_NAME, INTERFACE_NAME, METHOD_NAME,
@@ -261,6 +264,7 @@ int getLength(void)
 {
 	Myint = 0;
 	if (vsetupconnection()) {
+		cMutexLock lock(&_mutex);  // we must serialize the calls
 		Myarray = "mpris:length";
 		DBusMessage *reply =
 			sendMethodCall(OBJ_PATH, BUS_NAME, INTERFACE_NAME, METHOD_NAME,
