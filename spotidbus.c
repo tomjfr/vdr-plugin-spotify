@@ -173,6 +173,7 @@ DBusMessage *sendMethodCall(const char *objectpath, const char *busname,
 
 	if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_ERROR) {
 		esyslog("spotify: Error : %s", dbus_message_get_error_name(reply));
+		cCondWait::SleepMs(250); //FIXME: only sleep if error = ServiceUnknown
 		dbus_message_unref(reply);
 		reply = NULL;
 	}

@@ -43,7 +43,6 @@ public:
 
 cMenuSpotiMain::cMenuSpotiMain(void):cOsdMenu("Spotify")
 {
-	dsyslog("spotify: MainMenu created");
 	SetHelp(tr(""), tr(""), tr("Start Player"), tr("Exit"));
 }
 
@@ -55,25 +54,23 @@ eOSState cMenuSpotiMain::ProcessKey(eKeys Key)
 		switch (Key) {
 			case kOk:
 			case kYellow:
-				dsyslog("spotify: MainMenu kOk");
 				if (!spotiControl) {
+					dsyslog("spotify: Mainmenu: create new Control");
 					cControl::Launch(new cSpotifyControl());
 				} else {
-					dsyslog("spotify: use existing Control");
+					dsyslog("spotify: Mainmenu: use existing Control");
 					cControl::Attach();
 				}
 				return osEnd;
 			case kBack:
-				dsyslog("spotify: MainMenu kBack");
 				return osBack;
 			case kBlue:
-				dsyslog("spotify: MainMenu kBlue");
 				if (spotiPlayer)
 					spotiPlayer->Quit();
 				return osEnd;
 			default:
 				if (Key != kNone)
-					dsyslog("spotify: MainMenu kUnknown");
+					dsyslog("spotify: unknown Key");
 		}
 	}
 	return state;

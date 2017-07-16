@@ -1,7 +1,6 @@
 #
 # Makefile for a Video Disk Recorder plugin
 #
-# $Id$
 
 # The official name of this plugin.
 # This name will be used in the '-P...' option of VDR to load the plugin.
@@ -26,10 +25,9 @@ TMPDIR ?= /tmp
 ### The compiler options:
 
 export CFLAGS   = $(call PKGCFG,cflags)
-export CXXFLAGS = $(call PKGCFG,cxxflags)
+export CXXFLAGS = $(call PKGCFG,cxxflags) $(shell pkg-config --cflags dbus-1)
+export LIBS += $(shell pkg-config --libs dbus-1)
 
-#LIBS += -lgio-2.0 -lgobject-2.0 -lglib-2.0
-LIBS += -ldbus-1
 ### The version number of VDR's plugin API:
 
 APIVERSION = $(call PKGCFG,apiversion)
@@ -48,10 +46,6 @@ PACKAGE = vdr-$(ARCHIVE)
 SOFILE = libvdr-$(PLUGIN).so
 
 ### Includes and Defines (add further entries here):
-
-#INCLUDES += -I/usr/include/gio-unix-2.0 
-#INCLUDES += -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include
-INCLUDES += -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include
 
 DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
 

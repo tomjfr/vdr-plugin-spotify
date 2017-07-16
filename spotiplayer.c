@@ -28,21 +28,19 @@ cSpotiPlayer::cSpotiPlayer(void):cPlayer(pmAudioOnly),
 cThread("spotify-Player")
 {
 	run = true;
-	dsyslog("spotify: Player created");
 	Start();
 }
 
 cSpotiPlayer::~cSpotiPlayer()
 {
 	run = false;
-	dsyslog("spotify: delete Player");
 	Quit();
 }
 
 void cSpotiPlayer::Activate(bool On)
 {
 	if (On) {
-		dsyslog("spotify: Player_Activate On");
+		dsyslog("spotify: activate Player");
 		//runcommand Play
 	} else {
 		run = false;
@@ -52,9 +50,8 @@ void cSpotiPlayer::Activate(bool On)
 
 void cSpotiPlayer::Quit(void)
 {
-	dsyslog("spotify: Player Quit");
 	Activate(false);
-	Cancel(3);
+	Cancel(3); // FIXME: double cancel
 	Detach();
 	cControl::Shutdown();
 }
@@ -64,7 +61,6 @@ void cSpotiPlayer::Action(void)
 	while (run) {
 		cCondWait::SleepMs(1000);
 	}
-	dsyslog("spotify: player-Action ended");
 }
 
 bool cSpotiPlayer::GetIndex(int &Current, int &Total, bool SnapToIFrame)

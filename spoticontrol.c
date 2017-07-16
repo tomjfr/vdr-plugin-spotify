@@ -42,6 +42,7 @@ cSpotifyControl::cSpotifyControl(void):cControl(spotiPlayer =
 	starting = true;
 	displayMenu = NULL;
 	ForkAndExec(); // start spotify binary
+	cCondWait::SleepMs(500);
 	dsyslog("spotify: new Control");
 	spotiControl = this;
 	cStatus::MsgReplaying(this, "MP3", 0, true);
@@ -54,13 +55,11 @@ cSpotifyControl::~cSpotifyControl()
 	dsyslog("spotify: delete Control");
 	cStatus::MsgReplaying(this, 0, 0, false);
 	if (spotiPlayer) {
-		dsyslog("spotify: send Quit");
 		spotiPlayer->Quit();
-		dsyslog("spotify: quit spoti-binary");
 		SpotiCmd("Quit");
 		cCondWait::SleepMs(250);
 		if (waitpid(pid,0,WNOHANG)==0) { // Child still active
-			dsyslog("spotify: kill binary");
+			dsyslog("spotify: had to kill binary");
 			kill(pid,SIGTERM);
 		}
 		if (pid > 0) {
@@ -79,13 +78,12 @@ void cSpotifyControl::SpotiExec()
 	args[0] = "/usr/bin/spotify";
 	args[1] = NULL;
 	execvp(args[0], (char *const *)args);
-	dsyslog("spotify: execvp of '%s' failed: %s", args[0], strerror(errno));
+	esyslog("spotify: execvp of '%s' failed: %s", args[0], strerror(errno));
 }
 
 void cSpotifyControl::ForkAndExec()
 {
 	if ((pid = fork()) == -1) {
-		dsyslog("spotify: Fork failed");
 		return;
 	}
 	if (!pid) { // child
@@ -104,7 +102,7 @@ void cSpotifyControl::ShowProgress(void)
 		if (!starting) { // error in running binary
 			starting = true; // ??
 			if (spotiPlayer) {
-				dsyslog("spotify: connection error");
+				dsyslog("spotify: connection to binary failed");
 				spotiPlayer->Quit();
 			}
 			return;
@@ -120,7 +118,6 @@ void cSpotifyControl::ShowProgress(void)
 			if (!visible)
 				return;
 			if (!displayMenu) {
-				dsyslog("spotify:  ShowProgress creates displaymenu");
 				displayMenu = Skins.Current()->DisplayReplay(false);
 				displayMenu->SetTitle("Spotify Replay");
 				// not working in DisplayReplay
@@ -161,23 +158,19 @@ eOSState cSpotifyControl::ProcessKey(eKeys Key)
 {
 	ShowProgress(); // called every second
 	if (!spotiPlayer || !spotiPlayer->Active()) {
-		dsyslog("spotify: Control ProcessKey not active");
 		return osEnd;
 	}
 	switch ((int)Key & ~k_Repeat) {
 		case kBack:
-			dsyslog("spotify: kBack");
 			if (visible)
 				Hide();
 			cRemote::CallPlugin("spotify");
 			return osContinue;
 		case kBlue:
-			dsyslog("spotify: kBlue");
 			if (visible)
 				Hide();
 			return osEnd;
 		case kOk:
-			dsyslog("spotify: kOk");
 			if (visible)
 				Hide();
 			else {
@@ -187,26 +180,21 @@ eOSState cSpotifyControl::ProcessKey(eKeys Key)
 			break;
 		case kUp:
 		case kPlay:
-			dsyslog("spotify: kPlay");
 			PlayerCmd("PlayPause");
 			break;
 		case kStop:
-			dsyslog("spotify: kStop");
 			PlayerCmd("Stop");
 			break;
 		case kDown:
 		case kPause:
-			dsyslog("spotify: kPause");
 			PlayerCmd("Pause");
 			break;
 		case kYellow:
 		case kNext:
-			dsyslog("spotify: kNext");
 			PlayerCmd("Next");
 			break;
 		case kGreen:
 		case kPrev:
-			dsyslog("spotify: kPrev");
 			PlayerCmd("Previous");
 			break;
 		default:
