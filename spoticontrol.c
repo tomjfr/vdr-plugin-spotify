@@ -114,19 +114,7 @@ void cSpotifyControl::ShowProgress(void)
 		string buffer;
 		int speed, Current, Total;
 
-		if (spotiPlayer) {
-			if (!visible)
-				return;
-			if (!displayMenu) {
-				displayMenu = Skins.Current()->DisplayReplay(false);
-				displayMenu->SetTitle("Spotify Replay");
-				// not working in DisplayReplay
-				// displayMenu->SetButtons(tr(""),tr("Previous"),tr("Next"),tr("Exit"));
-				// not working displayMenu->SetMessage(mtInfo, "<Blue> to Exit");
-			}
-		}
-		else // !spotiPlayer
-			return;
+                if (!spotiPlayer) return;
 
 		artist = getMetaData("xesam:artist");
 		title = getMetaData("xesam:title");
@@ -136,12 +124,23 @@ void cSpotifyControl::ShowProgress(void)
 			buffer = "[SPOT] " + artist + " - " + title;
 		else
 			buffer = "[SPOT] " + title;
+		cStatus::MsgReplaying(this, buffer.c_str(), 0, true);
+
+		if (!visible)
+			return;
+		if (!displayMenu) {
+			displayMenu = Skins.Current()->DisplayReplay(false);
+			displayMenu->SetTitle("Spotify Replay");
+			// not working in DisplayReplay
+			// displayMenu->SetButtons(tr(""),tr("Previous"),tr("Next"),tr("Exit"));
+			// not working displayMenu->SetMessage(mtInfo, "<Blue> to Exit");
+		}
+
 		displayMenu->SetMessage(mtInfo, buffer.c_str());
 		displayMenu->SetProgress(Current, Total);
 		displayMenu->SetMode(play, forward, speed);
 		displayMenu->SetCurrent(IndexToHMSF(Current, false));
 		displayMenu->SetTotal(IndexToHMSF(Total, false));
-		cStatus::MsgReplaying(this, buffer.c_str(), 0, true);
 		Skins.Flush();
 	}
 }
