@@ -19,6 +19,9 @@ along with vdr-plugin-spotify.  If not, see <http://www.gnu.org/licenses/>.
 This plugin needs pkg "spotify-client" and a spotify license applied to
 the client.
 
+Some versions of spotify-client don't support dbus. Be aware!
+With these versions the plugin will not work.
+
 Calling this plugin from the main menu, allows you to start the
 spotify-client-binary from vdr with "OK" or "YELLOW".
 With PLAY,PAUSE,NEXT etc. the last remembered playlist can be heard.
