@@ -1,4 +1,4 @@
-Copyright (C) 2016-2017 Johann Friedrichs
+Copyright (C) 2016-2022 Johann Friedrichs
 
 This file is part of vdr-plugin-spotify,
 a  "plugin" for the Video Disk Recorder (VDR).
@@ -19,15 +19,20 @@ along with vdr-plugin-spotify.  If not, see <http://www.gnu.org/licenses/>.
 This plugin needs pkg "spotify-client" and a spotify license applied to
 the client.
 
-Some versions of spotify-client don't support dbus. Be aware!
-With these versions the plugin will not work.
+At first start of the the client /usr/bin/spotify from the vdr account
+or from the plugin the credentials must be filled in. Correct audio output
+should be verified. Only client versions which support dbus will work.
 
-Calling this plugin from the main menu, allows you to start the
-spotify-client-binary from vdr with "OK" or "YELLOW".
-With PLAY,PAUSE,NEXT etc. the last remembered playlist can be heard.
+Using a spotify client or app on any device, Playlists can be chosen and
+Spotify-Direct can be used to control the vdr-plugin and to listen
+to your music on the same device vdr is residing.
 
-Using a different device with a spotify client or app, Spotify-Direct can
-be used to control the vdr-plugin and to listen to your music on the same
-device vdr outputs its audio to.
+Vdr remote commands PLAY, PAUSE, STOP, NEXT, PREVIOUS are valid controls,
+BLUE will stop the spotifyd-binary and exit the plugin.
 
-The plugin is stopped with the BLUE-Key.
+If you use graphlcd it should be patched with the patch in patches.
+
+If you compile with USE_GRAPHTFT = 1, you should copy the script
+spotifycopycover.sh to /usr/local/bin. This allows to display the album-arts in
+a graphtft-window. Graphtft needs a theme, which recognizes SPOT (see
+example in scripts)

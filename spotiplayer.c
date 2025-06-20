@@ -1,5 +1,6 @@
+
 /*
- * Copyright (C) 2016-2017 Johann Friedrichs
+ * Copyright (C) 2016-2022 Johann Friedrichs
  *
  * This file is part of vdr-plugin-spotify.
  *
@@ -10,7 +11,7 @@
  *
  * vdr-plugin-spotify is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -22,77 +23,121 @@
 #include "spotidbus.h"
 #include "spoticontrol.h"
 
+extern bool conn_ok;
+extern cSpotiStat *spotistat;
+cMutex _posmutex;
+
 // --- cSpotiPlayer --------------------------------------------------
 
-cSpotiPlayer::cSpotiPlayer(void):cPlayer(pmAudioOnly),
-cThread("spotify-Player")
+cSpotiPlayer::cSpotiPlayer(void):cPlayer(pmAudioOnly), cThread("spotify-Player")
 {
-	run = true;
-	Start();
+   run = true;
+   Start();
 }
 
 cSpotiPlayer::~cSpotiPlayer()
 {
-	run = false;
-	Quit();
+   run = false;
+   Quit();
 }
 
-void cSpotiPlayer::Activate(bool On)
+void
+ cSpotiPlayer::Activate(bool On)
 {
-	if (On) {
-		dsyslog("spotify: activate Player");
-		//runcommand Play
-	} else {
-		run = false;
-		Cancel(2);
-	}
+   if (On) {
+      dsyslog("spotify: activate Player");
+      //runcommand Play
+      PlayerCmd("Play");        // ????
+   } else {
+      run = false;
+      Cancel(2);
+   }
 }
 
 void cSpotiPlayer::Quit(void)
 {
-	Activate(false);
-	Cancel(3); // FIXME: double cancel
-	Detach();
-	cControl::Shutdown();
+   if (conn_ok)
+      SpotiCmd("Quit");
+   Activate(false);
+   Cancel(3);                   // FIXME: double cancel
+   Detach();
+   cControl::Shutdown();
 }
 
 void cSpotiPlayer::Action(void)
 {
-	while (run) {
-		cCondWait::SleepMs(1000);
-	}
+   while (run) {
+      cCondWait::SleepMs(1000);
+   }
 }
 
 bool cSpotiPlayer::GetIndex(int &Current, int &Total, bool SnapToIFrame)
 {
-	// we cannot use Player2.Pos(), this is always 0
-	// for the first song - Current might be wrong
-	static int Length = 0;
-	static time_t Start;
+   static time_t lastCall = 0;
 
-	Current = 0;
-	Total = getLength() / 1000000;
-	if (Total != Length) {
-		Length = Total;
-		Start = time(NULL);
-	}
-	if (!getStatusPlaying()) // paused
-		Start++;
-	Total = SecondsToFrames(Total);
-	Current = SecondsToFrames(time(NULL) - Start);
-	if (Current < 0)
-		Current=0;
-	return true;
+   cMutexLock lock(&_posmutex); // must serialize calls
+   time_t now = time(NULL);
+
+   if (now - lastCall > 0) {
+      if (spotistat->spoti_playing) {
+         // increment 1 sec
+         int internalcurrent = spotistat->current + 1;
+
+         if (internalcurrent - spotistat->total < 0)
+            spotistat->current = internalcurrent;
+      }
+      lastCall = now;
+   }
+   //dsyslog("spotify getindex cur=%d, tot=%d", spotistat->current, spotistat->total);
+   Current = SecondsToFrames(spotistat->current);
+   if (Current < 0)             // can this happen?
+      Current = 0;
+   Total = SecondsToFrames(spotistat->total);
+   return true;
 }
 
-bool cSpotiPlayer::GetReplayMode(bool & Play, bool & Forward, int &Speed)
+bool cSpotiPlayer::GetReplayMode(bool &Play, bool &Forward, int &Speed)
 {
-	//get state
-	if (getStatusPlaying())
-		Play = true;
-	else
-		Play = false;
-	Forward = true;
-	Speed = -1;
-	return true;
+   if (spotistat->spoti_playing) {
+      Play = true;
+   } else {
+      Play = false;
+   }
+   Forward = true;
+   Speed = -1;
+   return true;
 }
+
+#ifdef USE_GRAPHTFT
+bool cSpotiPlayer::SetCover(const char *artUrl)
+{
+   char commandString[1024];
+   bool result = false;
+   int ret = false;
+
+#if 0
+   sprintf((char *)commandString,
+           "nohup /usr/local/bin/spoticopycover.sh %s >/dev/null 2>&1 &",
+           artUrl);
+#endif
+   sprintf((char *)commandString, // JF DEBUG
+           "nohup /usr/local/bin/spoticopycover.sh %s >/tmp/cover.log 2>&1 &",
+           artUrl);
+   ret = system((const char *)commandString);
+
+   if (ret)
+      result = true;
+
+   return result;
+}
+
+void cSpotiPlayer::RemoveOldCover(void)
+{
+   FILE *fp;
+
+   if ((fp = fopen("/tmp/graphTFT.cover", "rb"))) {
+      fclose(fp);
+      system("rm /tmp/graphTFT.cover");
+   }
+}
+#endif

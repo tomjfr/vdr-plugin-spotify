@@ -8,6 +8,9 @@
 
 PLUGIN = spotify
 
+# If we have graphtft-Plugin set this to 1
+USE_GRAPHTFT = 1
+
 ### The version number of this plugin (taken from the main source file):
 
 VERSION = $(shell grep 'static const char \*VERSION *=' $(PLUGIN).c | awk '{ print $$6 }' | sed -e 's/[";]//g')
@@ -48,6 +51,10 @@ SOFILE = libvdr-$(PLUGIN).so
 ### Includes and Defines (add further entries here):
 
 DEFINES += -DPLUGIN_NAME_I18N='"$(PLUGIN)"'
+
+ifeq ($(USE_GRAPHTFT),1)
+DEFINES += -DUSE_GRAPHTFT
+endif
 
 ### The object files (add further files here):
 
@@ -110,8 +117,6 @@ install: install-lib install-i18n
 indent:
 	for i in *.c *.h; do \
 	indent $$i; \
-	unexpand -a $$i | sed -e s/constconst/const/ > $$i.up; \
-	mv $$i.up $$i; \
 	rm $$i~; \
 	done
 

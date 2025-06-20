@@ -1,5 +1,6 @@
+
 /*
- * Copyright (C) 2016-2017 Johann Friedrichs
+ * Copyright (C) 2016-2022 Johann Friedrichs
  *
  * This file is part of vdr-plugin-spotify.
  *
@@ -10,7 +11,7 @@
  *
  * vdr-plugin-spotify is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -31,11 +32,12 @@
 //Helper function to setup connection
 bool vsetupconnection();
 DBusMessage *sendMethodCall(const char *objectpath, const char *busname,
-	const char *interfacename, const char *methodname);
+                            const char *interfacename, const char *methodname);
 void print_iter(DBusMessageIter * iter);
 bool getStatusPlaying(void);
 bool PlayerCmd(const char *cmd);
 bool SpotiCmd(const char *cmd);
-cString getMetaData(const char *arrayvalue);
+bool getMetaData(void);
 int getLength(void);
+int getCurrent(void);
 #endif //___SPOTIDBUS_H
