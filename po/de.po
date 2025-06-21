@@ -1,0 +1,28 @@
+# German translations for vdr-spotify package
+# German translation for vdr-spotify.
+# Copyright (C) 2018 THE vdr-spotify'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the vdr-spotify package.
+# johann <johann.friedrichs@web.de>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: vdr-spotify 0.7\n"
+"Report-Msgid-Bugs-To: <see README>\n"
+"POT-Creation-Date: 2018-09-29 21:03+0200\n"
+"PO-Revision-Date: 2018-09-29 21:00+0200\n"
+"Last-Translator: johann <johann.friedrichs@web.de>\n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Start Player"
+msgstr "Starte Player"
+
+msgid "Exit"
+msgstr "Exit"
+
+msgid "Spotify Player active"
+msgstr ""

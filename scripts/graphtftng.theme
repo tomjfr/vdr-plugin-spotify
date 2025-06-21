@@ -1,0 +1,16 @@
+// Offsets are optimized for 800x600 please adjust
+...
+[ReplayMP3]
+
+// ----------------------------------------
+#ifdef MP3_PLUGIN
+// ----------------------------------------
+
+Include=ReplayCommon;
+...
+//Ausgabe des mp3 Titels
+Text text={replayTitle},x=5,y=105,size=42,height=155,width=790,align=left,lines=2,red=255,green=255,blue=255,scroll=marquee,scroll_count=5;
+
+//Cover ausgeben (mit Cover passt keine dritte Zeile Text)
+ImageFile x=235,y=260,width=330,height=247,path=/tmp/graphTFT.cover,path2=symbols/nocover.png,fit=yes,aspect_ratio=yes;
+...

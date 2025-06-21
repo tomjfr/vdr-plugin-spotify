@@ -6,7 +6,7 @@
 # This name will be used in the '-P...' option of VDR to load the plugin.
 # By default the main source file also carries this name.
 
-PLUGIN = spotify
+PLUGIN = spotifyd
 
 # If we have graphtft-Plugin set this to 1
 USE_GRAPHTFT = 1
@@ -58,7 +58,7 @@ endif
 
 ### The object files (add further files here):
 
-OBJS = $(PLUGIN).o spotidbus.o spotiplayer.o spoticontrol.o
+OBJS = $(PLUGIN).o spotidbus.o spotiplayer.o spoticontrol.o fifo.o
 
 ### The main target:
 
