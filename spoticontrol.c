@@ -141,12 +141,13 @@ void cSpotifyControl::SpotiExec()
   args[3] = "--on-song-change-hook";
   args[4] = "/usr/local/bin/vdr-spotify-onevent.sh";
   args[5] = "--no-daemon";
-  args[6] = "--verbose"; // TODO make configurable in conf.d
-  args[7] = NULL;
-  dsyslog("spotifyd: exec %s %s %s %s %s %s %s", args[0], args[1], args[2],
-    args[3], args[4], args[5], args[6]);
-  //dsyslog("spotifyd: exec %s %s %s %s %s %s", args[0], args[1], args[2],
-    //args[3], args[4], args[5]);
+  //args[6] = "--verbose"; // TODO make configurable in conf.d
+  args[6] = NULL;
+  //args[7] = NULL;
+  //dsyslog("spotifyd: exec %s %s %s %s %s %s %s", args[0], args[1], args[2],
+   // args[3], args[4], args[5], args[6]);
+  dsyslog("spotifyd: exec %s %s %s %s %s %s", args[0], args[1], args[2],
+    args[3], args[4], args[5]);
   execvp(args[0], (char *const *)args);
   esyslog("spotifyd: execvp of '%s' failed: %s", args[0], strerror(errno));
 }

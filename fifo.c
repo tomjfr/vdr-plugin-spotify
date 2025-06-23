@@ -33,7 +33,7 @@ void cFifo::Stop()
 void cFifo::Action(void)
 {
   //char *fifoevent = NULL;
-  char fifoevent[240];
+  char fifoevent[340];
   char *key;
   char *val;
   cString event = "";
@@ -45,6 +45,8 @@ void cFifo::Action(void)
   cString shuffle = "";
   cString repeat = "";
   static cString lasttrackid = "00";
+  fifoevent[338] = '\n'; // prevent crash if event is too long
+  fifoevent[339] = '\n'; // multibyte ??
   unlink("/tmp/spotfifo");
   if (mkfifo("/tmp/spotfifo", 0640) == 0) {
     dsyslog("spotifyd successfully created FIFO");
@@ -56,7 +58,7 @@ void cFifo::Action(void)
     esyslog("spotifyd could not create fifo");  // TODO exit plugin
   }
   while (Running() && spotfifo && spotistat->status==eStarted) {
-    ssize_t bytes = read(spotfifo, fifoevent, 240); // read everything
+    ssize_t bytes = read(spotfifo, fifoevent, 338); // read last event
     if (bytes > 0) {
       conn_ok = true;  // we got info from binary
       close(spotfifo); // makes writer wait
@@ -66,7 +68,6 @@ void cFifo::Action(void)
       char *nl = strchr(pa, '\n');
       nl[0] = '\0'; // terminate string
       dsyslog("spotifyd: got FIFO %s", fifoevent);
-      //fifoevent[strlen(fifoevent) - 2] = '\0';
       while (strlen(pa) > 2) { // string not fully consumed
         // fifoevent contains key1=val1 key2=val2...
         pa = skipspace(pa); // set pa to first notblank char

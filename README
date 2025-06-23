@@ -1,40 +1,40 @@
-Copyright (C) 2016-2017 Johann Friedrichs
+Copyright (C) 2016-2025 Johann Friedrichs
 
-This file is part of vdr-plugin-spotify,
+This file is part of vdr-plugin-spotifyd,
 a  "plugin" for the Video Disk Recorder (VDR).
 
-vdr-plugin-spotify is free software: you can redistribute it and/or modify
+vdr-plugin-spotifyd is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-vdr-plugin-spotify is distributed in the hope that it will be useful,
+vdr-plugin-spotifyd is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with vdr-plugin-spotify.  If not, see <http://www.gnu.org/licenses/>.
+along with vdr-plugin-spotifyd. If not, see <http://www.gnu.org/licenses/>.
 
-This plugin needs the rust-implementation "spotifyd" from github and a
-premium spotify license.
-spotifyd must be created with the feature dbus_mpris and - if you prefer
-pulse to alsa - with feature pulse-audio
+The plugin manages the playcontrol and the display of title-information.
+The binary needed to let the vdr server act as a spotify-direct client
+must be cloned with git from https://github.com/Spotifyd/spotifyd.git. In
+this directory run "cargo build --release --features=dbus_mpris [,
+pulseaudio_backend]". You will need a rust development environment.
+Also needed is a premium spotify license.
 
-You should create a spotifyd.conf in plugins/spotifyd and fill the
-credentials, the output (alsa or pulse), a specific device name. See
-config/spotifyd.conf.
+You should create a spotifyd.conf in plugins/spotifyd ,the output (alsa or
+pulse (if preferred and compiled with pulseaudio_backend)), a specific
+device name. See config/spotifyd.conf.
 
 Using any spotify client or app, Playlists can be chosen and Spotify-Direct
 can be used to control the vdr-plugin and to listen to your music on the same
 device vdr is residing.
 
-You should get a development-cliend-id from spotify and put
-SPOTIFYD_CLIEND_ID=xxxxxxx
-into vdr's session_environment.
+It is possible to get a development-cliend-id from spotify and put
+SPOTIFYD_CLIENT_ID=xxxxxxx into vdr's session_environment.
 
-The plugin needs the script scripts/vdr-spotify-onevent.sh in
-/usr/local/bin
+The plugin needs the script scripts/vdr-spotify-onevent.sh in /usr/local/bin
 
 Vdr remote commands PLAY, PAUSE, STOP, NEXT, PREVIOUS are valid controls,
 BLUE will stop the spotifyd-binary and exit the plugin.
@@ -43,5 +43,5 @@ Graphlcd should be patched with the patch in patches.
 
 If you compile with USE_GRAPHTFT = 1, you should copy the script
 spotifycopycover.sh to /usr/local/bin. This allows to display the album-arts in
-a graphtft-window. Graphtft needs a theme, which recognizes SPOT (see
-example in scripts)
+a graphtft-window. Graphtft needs a theme, which recognizes SPOT and (if wanted)
+can display images (see example in scripts)
